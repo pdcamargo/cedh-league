@@ -28,7 +28,7 @@ export default withPageAuthRequired(
             <Card.Header.Title>No leagues found</Card.Header.Title>
           </Card.Header>
           <Card.Body>
-            <p>You can create a new league by clicking the button below.</p>
+            You can create a new league by clicking the button below
           </Card.Body>
           <Card.Footer>
             <ButtonGroup spacing="2">
