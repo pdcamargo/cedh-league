@@ -22,6 +22,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         padding={["15px 0", null, "30px 0"]}
         flex="1 0 auto"
         flexDirection="column"
+        marginLeft={["0", null, "100px"]}
       >
         <Container maxW="container.xl">{children}</Container>
       </Flex>
