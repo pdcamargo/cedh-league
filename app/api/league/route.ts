@@ -132,27 +132,27 @@ export const GET = withApiAuthRequired(async (req) => {
 
   let leagues = result.rows;
 
-  if (leagues.length === 0) {
-    await createLeague({
-      id: generateUUID(),
-      createdAt: new Date().toISOString(),
-      name: "Test League",
-      ownerId,
-      phasesFrequency: "monthly",
-      updatedAt: new Date().toISOString(),
-      deletedAt: undefined,
-      description: "Test League Description",
-      endDate: undefined,
-      finishedAt: undefined,
-      maxParticipants: undefined,
-      minParticipants: 0,
-      startDate: undefined,
-    });
-  }
+  //   if (leagues.length === 0) {
+  //     await createLeague({
+  //       id: generateUUID(),
+  //       createdAt: new Date().toISOString(),
+  //       name: "Test League",
+  //       ownerId,
+  //       phasesFrequency: "monthly",
+  //       updatedAt: new Date().toISOString(),
+  //       deletedAt: undefined,
+  //       description: "Test League Description",
+  //       endDate: undefined,
+  //       finishedAt: undefined,
+  //       maxParticipants: undefined,
+  //       minParticipants: 0,
+  //       startDate: undefined,
+  //     });
+  //   }
 
-  result = await getLeaguesByOwnerId(ownerId);
+  //   result = await getLeaguesByOwnerId(ownerId);
 
-  leagues = result.rows;
+  //   leagues = result.rows;
 
   return NextResponse.json({ leagues }, { status: 200 });
 });
