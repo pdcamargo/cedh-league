@@ -3,7 +3,7 @@
 import { withPageAuthRequired } from "@auth0/nextjs-auth0/client";
 import Card from "../components/Card";
 import useSWR from "swr";
-import { Flex } from "@chakra-ui/react";
+import { Button, ButtonGroup, Flex } from "@chakra-ui/react";
 
 const fetcher = async (
   uri: string
@@ -20,6 +20,26 @@ export default withPageAuthRequired(
 
     if (error) return <div>oops... {error.message}</div>;
     if (data === undefined) return <div>Loading...</div>;
+
+    if (data.leagues.length === 0) {
+      return (
+        <Card>
+          <Card.Header>
+            <Card.Header.Title>No leagues found</Card.Header.Title>
+          </Card.Header>
+          <Card.Body>
+            <p>You can create a new league by clicking the button below.</p>
+          </Card.Body>
+          <Card.Footer>
+            <ButtonGroup spacing="2">
+              <Button variant="solid" colorScheme="green">
+                Create League
+              </Button>
+            </ButtonGroup>
+          </Card.Footer>
+        </Card>
+      );
+    }
 
     return (
       <Flex flexWrap="wrap" gap={3}>
