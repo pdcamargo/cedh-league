@@ -1,9 +1,12 @@
-"use client";
-
-import { withPageAuthRequired } from "@auth0/nextjs-auth0/client";
+import { withPageAuthRequired, getSession } from "@auth0/nextjs-auth0";
 import Card from "../components/Card";
-import useSWR from "swr";
-import { Button, ButtonGroup, Flex } from "@chakra-ui/react";
+import { Divider, Flex, Heading, SimpleGrid, Text } from "@chakra-ui/react";
+import prisma from "@/lib/prisma";
+import CreateLeague from "./components/CreateLeague";
+import { League, LeaguePhase } from "@prisma/client";
+import CreateLeagueModal from "./components/CreateLeagueModal";
+
+import DeleteLeague from "./components/DeleteLeague";
 
 const fetcher = async (
   uri: string
@@ -14,48 +17,158 @@ const fetcher = async (
   return response.json();
 };
 
+const formatDate = (date: Date | null, defaultValue: string) => {
+  if (!date) {
+    return defaultValue;
+  }
+
+  return new Date(date).toLocaleDateString("pt-BR");
+};
+
 export default withPageAuthRequired(
-  function DashboardPage() {
-    const { data, error } = useSWR("/api/league", fetcher);
+  async function DashboardPage() {
+    const { user } = (await getSession()) ?? {};
 
-    if (error) return <div>oops... {error.message}</div>;
-    if (data === undefined) return <div>Loading...</div>;
+    const leagues = await prisma.league.findMany({
+      where: {
+        ownerId: user?.sub,
+      },
+      // select participatns relation
+      include: {
+        participants: true,
+        phases: true,
+      },
+    });
 
-    if (data.leagues.length === 0) {
-      return (
-        <Card>
-          <Card.Header>
-            <Card.Header.Title>No leagues found</Card.Header.Title>
-          </Card.Header>
-          <Card.Body>
-            You can create a new league by clicking the button below
-          </Card.Body>
-          <Card.Footer>
-            <ButtonGroup spacing="2">
-              <Button variant="solid" colorScheme="green">
-                Create League
-              </Button>
-            </ButtonGroup>
-          </Card.Footer>
-        </Card>
-      );
-    }
+    const leaguesUserIsIn = await prisma.league.findMany({
+      where: {
+        participants: {
+          some: {
+            userId: user?.sub,
+          },
+        },
+      },
+    });
+
+    const hasLeagueStarted = (
+      league: League & {
+        phases: Array<LeaguePhase>;
+      }
+    ) => {
+      return league.phases.some((phase) => !!phase.startedAt);
+    };
+
+    const numberOfPhasesAlreadyFinished = (
+      league: League & {
+        phases: Array<LeaguePhase>;
+      }
+    ) => {
+      return league.phases.filter((phase) => !!phase.finishedAt).length;
+    };
+
+    const frequencyToText = (frequency: League["phasesFrequency"]) => {
+      const objMap: Record<League["phasesFrequency"], string> = {
+        weekly: "Semanal",
+        fortnightly: "Quinzenal",
+        monthly: "Mensal",
+        quarterly: "Trimestral",
+        yearly: "Anual",
+      };
+
+      return objMap[frequency];
+    };
 
     return (
-      <Flex flexWrap="wrap" gap={3}>
-        {data.leagues.map((league: any) => (
-          <Card key={league.id}>
-            <Card.Header>
-              <Card.Header.Title>{league?.name}</Card.Header.Title>
-              {league?.description && (
-                <Card.Header.SubTitle>
-                  {league.description}
-                </Card.Header.SubTitle>
-              )}
-            </Card.Header>
-            <Card.Body>League {JSON.stringify(league)}</Card.Body>
-          </Card>
-        ))}
+      <Flex flexDirection="column" gap={3}>
+        <Flex
+          flex="1"
+          maxWidth={leagues.length === 0 ? "450px" : undefined}
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          {leagues.length === 0 ? (
+            <CreateLeague userId={user?.sub} pathToRevalidate="/dashboard" />
+          ) : (
+            <>
+              <Heading size="md">Ligas criadas por mim</Heading>
+
+              <CreateLeagueModal
+                userId={user?.sub}
+                pathToRevalidate="/dashboard"
+              />
+            </>
+          )}
+        </Flex>
+
+        <Divider borderColor="#1E2027" />
+
+        <SimpleGrid minChildWidth="320px" spacing={3}>
+          {leagues.map((league) => (
+            <Card key={league.id}>
+              <Card.Header>
+                <Card.Header.Title
+                  display="flex"
+                  gap={2}
+                  alignItems={"flex-start"}
+                  flexDir={"column"}
+                  mb={2}
+                >
+                  {league?.name}
+                  <Flex gap={3} display="inline-flex">
+                    <Text
+                      fontSize="x-small"
+                      fontWeight="thin"
+                      textTransform="uppercase"
+                    >
+                      <b>Data de início:</b>{" "}
+                      {formatDate(league?.startDate, "N/A")}
+                    </Text>
+                    <Text
+                      fontSize="x-small"
+                      fontWeight="thin"
+                      textTransform="uppercase"
+                    >
+                      <b>Data de fim:</b> {formatDate(league?.endDate, "N/A")}
+                    </Text>
+                  </Flex>
+                </Card.Header.Title>
+
+                <DeleteLeague
+                  leagueId={league.id}
+                  userId={user?.sub}
+                  pathToRevalidate="/dashboard"
+                />
+              </Card.Header>
+              <Card.Body>
+                <Text fontWeight="thin">
+                  <b>Frequência:</b> {frequencyToText(league.phasesFrequency)}
+                </Text>
+
+                <Divider borderColor="#1E2027" my={2} />
+
+                <Text fontWeight="thin">
+                  <b>Min participantes:</b> {league.minParticipants ?? "N/A"}
+                </Text>
+
+                <Text fontWeight="thin">
+                  <b>Max participantes:</b> {league.maxParticipants ?? "N/A"}
+                </Text>
+
+                <Divider borderColor="#1E2027" my={2} />
+
+                <Text fontWeight="thin">
+                  <b>Rodadas finalizadas:</b>{" "}
+                  {numberOfPhasesAlreadyFinished(league)} de{" "}
+                  {league.phases.length}
+                </Text>
+                <Text fontWeight="thin">
+                  <b>Participantes em toda liga:</b>{" "}
+                  {league.participants.length}
+                </Text>
+              </Card.Body>
+            </Card>
+          ))}
+        </SimpleGrid>
       </Flex>
     );
   },

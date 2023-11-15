@@ -1,30 +1,47 @@
 import Card from "@/app/components/Card";
+import prisma from "@/lib/prisma";
+import { getSession, withPageAuthRequired } from "@auth0/nextjs-auth0";
+import { notFound } from "next/navigation";
+
 import { Button, ButtonGroup, Text } from "@chakra-ui/react";
 
-export default function LeaguePage() {
+export default withPageAuthRequired(async function LeaguePage() {
+  const { user } = (await getSession()) ?? {};
+
+  const league = await prisma.league.findFirst({
+    where: {
+      OR: [
+        {
+          ownerId: user?.sub,
+        },
+        {
+          participants: {
+            some: {
+              userId: user?.sub,
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  // 404 if not found
+  if (!league) {
+    return notFound();
+  }
+
+  const isOwner = league.ownerId === user?.sub;
+
   return (
     <Card>
       <Card.Header>
-        <Card.Header.Title>Liga Card Halls</Card.Header.Title>
-        <Card.Header.SubTitle>
-          Lorem ipsum, dolor sit amet consectetur adipisicing elit. Mollitia in
-          dolore dolores, soluta quasi eligendi est fuga quidem at praesentium
-          nisi, vel, alias quia. Magni, quis minima. Recusandae, a excepturi?
-        </Card.Header.SubTitle>
+        <Card.Header.Title>{league?.name}</Card.Header.Title>
+        {!!league?.description && (
+          <Card.Header.SubTitle>{league.description}</Card.Header.SubTitle>
+        )}
       </Card.Header>
       <Card.Body>
-        <Text>
-          <b>Total de etapas</b>: 6
-        </Text>
-        <Text>
-          <b>Configuração de etapas</b>: Mensal
-        </Text>
-        <Text>
-          <b>Total de players cadastrados</b>: 27
-        </Text>
-        <Text>
-          <b>Previsão de fim da liga</b>: 10/01/2024
-        </Text>
+        <Text as="pre">{JSON.stringify(league, null, 2)}</Text>
       </Card.Body>
 
       <Card.Footer>
@@ -39,4 +56,4 @@ export default function LeaguePage() {
       </Card.Footer>
     </Card>
   );
-}
+});

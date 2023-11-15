@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+model League {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  ownerId         String
+  maxParticipants Int?
+  minParticipants Int?      @default(2)
+  phasesFrequency String    @default("monthly")
+  startDate       DateTime?
+  endDate         DateTime?
+  finishedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  phases       LeaguePhase[]
+  participants LeagueParticipant[]
+
+  @@index([ownerId, name])
+}
+
+model LeaguePhase {
+  id                         String    @id @default(cuid())
+  leagueId                   String
+  name                       String
+  description                String?
+  isProxyValid               Boolean   @default(true)
+  requestCommanderForCheckIn Boolean   @default(false)
+  startedAt                  DateTime?
+  finishedAt                 DateTime?
+  startDate                  DateTime?
+  endDate                    DateTime?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+
+  league   League               @relation(fields: [leagueId], references: [id])
+  checkIns LeaguePhaseCheckIn[]
+  rounds   LeaguePhaseRound[]
+
+  @@index([name])
+}
+
+model LeaguePhaseRound {
+  id            String   @id @default(cuid())
+  leaguePhaseId String
+  roundNumber   Int
+  duration      Float    @default(1.25)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  phase  LeaguePhase             @relation(fields: [leaguePhaseId], references: [id])
+  tables LeaguePhaseRoundTable[]
+
+  @@index([roundNumber])
+}
+
+model LeaguePhaseRoundTable {
+  id                 String   @id @default(cuid())
+  leaguePhaseRoundId String
+  winnerId           String?
+  draw               Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  participantsInBye  String[] @default([])
+
+  round        LeaguePhaseRound                   @relation(fields: [leaguePhaseRoundId], references: [id])
+  participants LeaguePhaseRoundTableParticipant[]
+
+  @@index([winnerId, draw, participantsInBye])
+}
+
+model LeaguePhaseRoundTableParticipant {
+  id                      String   @id @default(cuid())
+  leaguePhaseRoundTableId String
+  leagueParticipantId     String
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  table       LeaguePhaseRoundTable @relation(fields: [leaguePhaseRoundTableId], references: [id])
+  participant LeagueParticipant     @relation(fields: [leagueParticipantId], references: [id])
+}
+
+model LeaguePhaseCheckIn {
+  id            String   @id @default(cuid())
+  leaguePhaseId String
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  leaguePhase LeaguePhase @relation(fields: [leaguePhaseId], references: [id])
+
+  @@index([userId])
+}
+
+model LeagueParticipant {
+  id        String   @id @default(cuid())
+  leagueId  String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  league League                             @relation(fields: [leagueId], references: [id])
+  tables LeaguePhaseRoundTableParticipant[]
+
+  @@index([userId])
+}

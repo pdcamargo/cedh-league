@@ -30,7 +30,7 @@ export default function Card({ children, ...props }: PanelCardProps) {
 
 function CardHeader({ children, ...props }: CardHeaderProps) {
   return (
-    <ChakraCardHeader pb="0" {...props}>
+    <ChakraCardHeader pb="0" pos="relative" {...props}>
       {children}
     </ChakraCardHeader>
   );
