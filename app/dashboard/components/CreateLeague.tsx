@@ -3,15 +3,24 @@
 import Card from "@/app/components/Card";
 import {
   Button,
+  Checkbox,
+  Divider,
   FormControl,
   FormLabel,
   Input,
+  Select,
+  Slider,
+  SliderFilledTrack,
+  SliderThumb,
+  SliderTrack,
   Textarea,
+  Tooltip,
   VStack,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { createLeague } from "../actions/league";
 import { useFormStatus } from "react-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type CreateLeagueProps = {
   userId: string;
@@ -58,6 +67,17 @@ export default function CreateLeague({
   userId: ownerId,
   onFinished,
 }: CreateLeagueProps) {
+  const [controlNumberOfParticipants, setControlNumberOfParticipants] =
+    useState(false);
+
+  const [minParticipantsSliderValue, setMinParticipantsSliderValue] =
+    useState(0);
+  const [maxParticipantsSliderValue, setMaxParticipantsSliderValue] =
+    useState(0);
+
+  const minParticipantsDisclosure = useDisclosure();
+  const maxParticipantsDisclosure = useDisclosure();
+
   return (
     <Card>
       <Card.Header>
@@ -109,6 +129,111 @@ export default function CreateLeague({
                 type="date"
               />
             </FormControl>
+
+            <FormControl>
+              <FormLabel htmlFor="phasesFrequency">
+                Frequência de partidas
+              </FormLabel>
+              <Select
+                id="phasesFrequency"
+                name="phasesFrequency"
+                defaultValue="monthly"
+                color="black"
+                variant="filled"
+                _focus={{
+                  bgColor: "white",
+                }}
+              >
+                <option value="weekly">Semanal</option>
+                <option value="fortnightly">Quinzenal</option>
+                <option value="monthly">Mensal</option>
+                <option value="quarterly">Trimestral</option>
+                <option value="yearly">Anual</option>
+              </Select>
+            </FormControl>
+
+            <Divider borderColor="GrayText" my={2} />
+
+            <FormControl display="flex" alignItems="center" flexDir="row">
+              <FormLabel htmlFor="controlNumberOfParticipants" mb={0}>
+                Controlar número de jogadores
+              </FormLabel>
+
+              <Checkbox
+                id="controlNumberOfParticipants"
+                checked={controlNumberOfParticipants}
+                onChange={(e) =>
+                  setControlNumberOfParticipants(e.target.checked)
+                }
+              />
+            </FormControl>
+
+            {controlNumberOfParticipants && (
+              <>
+                <FormControl>
+                  <FormLabel htmlFor="minParticipants">
+                    Número mínimo de participantes
+                  </FormLabel>
+
+                  <Slider
+                    id="minParticipants"
+                    name="minParticipants"
+                    defaultValue={0}
+                    min={0}
+                    max={100}
+                    colorScheme="red"
+                    onChange={(val) => setMinParticipantsSliderValue(val)}
+                    onMouseEnter={minParticipantsDisclosure.onOpen}
+                    onMouseLeave={minParticipantsDisclosure.onClose}
+                  >
+                    <SliderTrack>
+                      <SliderFilledTrack />
+                    </SliderTrack>
+                    <Tooltip
+                      hasArrow
+                      bg="teal.500"
+                      color="white"
+                      placement="top"
+                      isOpen={minParticipantsDisclosure.isOpen}
+                      label={`${minParticipantsSliderValue} jogadores`}
+                    >
+                      <SliderThumb />
+                    </Tooltip>
+                  </Slider>
+                </FormControl>
+                <FormControl>
+                  <FormLabel htmlFor="maxParticipants">
+                    Número máximo de participantes
+                  </FormLabel>
+
+                  <Slider
+                    id="maxParticipants"
+                    name="maxParticipants"
+                    defaultValue={0}
+                    min={0}
+                    max={100}
+                    colorScheme="red"
+                    onChange={(val) => setMaxParticipantsSliderValue(val)}
+                    onMouseEnter={maxParticipantsDisclosure.onOpen}
+                    onMouseLeave={maxParticipantsDisclosure.onClose}
+                  >
+                    <SliderTrack>
+                      <SliderFilledTrack />
+                    </SliderTrack>
+                    <Tooltip
+                      hasArrow
+                      bg="teal.500"
+                      color="white"
+                      placement="top"
+                      isOpen={maxParticipantsDisclosure.isOpen}
+                      label={`${maxParticipantsSliderValue} jogadores`}
+                    >
+                      <SliderThumb />
+                    </Tooltip>
+                  </Slider>
+                </FormControl>
+              </>
+            )}
           </VStack>
         </Card.Body>
 

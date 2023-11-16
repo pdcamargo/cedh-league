@@ -8,15 +8,6 @@ import CreateLeagueModal from "./components/CreateLeagueModal";
 
 import DeleteLeague from "./components/DeleteLeague";
 
-const fetcher = async (
-  uri: string
-): Promise<{
-  leagues: Array<any>;
-}> => {
-  const response = await fetch(uri);
-  return response.json();
-};
-
 const formatDate = (date: Date | null, defaultValue: string) => {
   if (!date) {
     return defaultValue;

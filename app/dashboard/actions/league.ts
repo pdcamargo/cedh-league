@@ -8,14 +8,12 @@ import { revalidatePath } from "next/cache";
 const createLeagueSchema = z.object({
   ownerId: z.string(),
   name: z.string().min(3).max(255),
-  description: z.string().min(0).max(5000).nullable(),
+  description: z.string().min(0).max(5000).optional().nullable(),
   startDate: z.string().nullable(),
   endDate: z.string().nullable(),
-  minParticipants: z.number().min(0).nullable(),
-  maxParticipants: z.number().min(0).nullable(),
   phasesFrequency: z.enum([
-    "daily",
     "weekly",
+    "fortnightly",
     "monthly",
     "quarterly",
     "yearly",
@@ -44,8 +42,12 @@ export async function createLeague(
     endDate: formData.get("endDate")
       ? new Date(formData.get("endDate") as string).toISOString()
       : null,
-    minParticipants: formData.get("minParticipants"),
-    maxParticipants: formData.get("maxParticipants"),
+    minParticipants: formData.get("minParticipants")
+      ? Number(formData.get("minParticipants"))
+      : null,
+    maxParticipants: formData.get("maxParticipants")
+      ? Number(formData.get("maxParticipants"))
+      : null,
     phasesFrequency: formData.get("phasesFrequency") ?? "monthly",
   });
 
