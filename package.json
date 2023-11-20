@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:sync": "npx prisma db push",
+    "db:generate": "npx prisma generate"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^3.2.0",

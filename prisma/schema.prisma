@@ -14,8 +14,12 @@ model League {
   description     String?
   ownerId         String
   maxParticipants Int?
-  minParticipants Int?      @default(2)
+  minParticipants Int?
   phasesFrequency String    @default("monthly")
+  pointsPerWin    Int       @default(3)
+  pointsPerDraw   Int       @default(1)
+  pointsPerLoss   Int       @default(0)
+  pointsPerBye    Int       @default(3)
   startDate       DateTime?
   endDate         DateTime?
   finishedAt      DateTime?
@@ -24,8 +28,21 @@ model League {
 
   phases       LeaguePhase[]
   participants LeagueParticipant[]
+  admins       LeagueAdmin[]
 
   @@index([ownerId, name])
+}
+
+model LeagueAdmin {
+  id        String   @id @default(cuid())
+  userId    String
+  leagueId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  league League @relation(fields: [leagueId], references: [id])
+
+  @@index([userId])
 }
 
 model LeaguePhase {
@@ -38,7 +55,6 @@ model LeaguePhase {
   startedAt                  DateTime?
   finishedAt                 DateTime?
   startDate                  DateTime?
-  endDate                    DateTime?
   createdAt                  DateTime  @default(now())
   updatedAt                  DateTime  @updatedAt
 
@@ -89,12 +105,19 @@ model LeaguePhaseRoundTableParticipant {
   participant LeagueParticipant     @relation(fields: [leagueParticipantId], references: [id])
 }
 
+enum CheckInStatus {
+  INTERESTED
+  CONFIRMED
+}
+
 model LeaguePhaseCheckIn {
-  id            String   @id @default(cuid())
+  id            String        @id @default(cuid())
   leaguePhaseId String
   userId        String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  commander     String[]
+  status        CheckInStatus @default(INTERESTED)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   leaguePhase LeaguePhase @relation(fields: [leaguePhaseId], references: [id])
 
